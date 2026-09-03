@@ -1,0 +1,89 @@
+nameOverride: ""
+fullnameOverride: ""
+environment: dev
+partOf: talay
+replicaCount: 1
+revisionHistoryLimit: 5
+
+image:
+  repository: example.invalid/talay/worker
+  tag: "0.0.0"
+  digest: ""
+  pullPolicy: IfNotPresent
+imagePullSecrets: []
+command: []
+args: []
+
+runtime:
+  type: java
+  java:
+    agent:
+      enabled: true
+      image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-java:2.31.1
+    toolOptions: ""
+  node:
+    autoInstrumentation:
+      enabled: false
+    nodeOptions: ""
+
+serviceAccount:
+  create: true
+  automount: false
+  annotations: {}
+  name: ""
+
+config: {}
+env: []
+envFrom: []
+externalSecret:
+  enabled: false
+  refreshInterval: 1h
+  secretStoreName: vault
+  secretStoreKind: ClusterSecretStore
+  remoteKey: ""
+  targetName: ""
+
+observability:
+  enabled: true
+  serviceName: ""
+  otlpEndpoint: http://otel-collector.monitoring.svc.cluster.local:4318
+  otlpProtocol: http/protobuf
+  samplingRatio: "1.0"
+
+podAnnotations: {}
+podLabels: {}
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: [ALL]
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    memory: 768Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 75
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+networkPolicy:
+  denyIngress: true
+
+terminationGracePeriodSeconds: 60
+nodeSelector: {}
+tolerations: []
+affinity: {}
+volumes: []
+volumeMounts: []

@@ -1,0 +1,143 @@
+{{- if .Values.serviceAccount.create }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "talay.serviceAccountName" . }}
+  labels:
+    {{- include "talay.labels" . | nindent 4 }}
+automountServiceAccountToken: {{ .Values.serviceAccount.automount }}
+---
+{{- end }}
+{{- if .Values.config }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "talay.fullname" . }}
+data:
+  {{- range $key, $value := .Values.config }}
+  {{ $key }}: {{ $value | toString | quote }}
+  {{- end }}
+---
+{{- end }}
+{{- if .Values.externalSecret.enabled }}
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: {{ include "talay.externalSecretName" . }}
+spec:
+  refreshInterval: {{ .Values.externalSecret.refreshInterval | quote }}
+  secretStoreRef:
+    name: {{ .Values.externalSecret.secretStoreName | quote }}
+    kind: {{ .Values.externalSecret.secretStoreKind | quote }}
+  target:
+    name: {{ include "talay.externalSecretName" . }}
+    creationPolicy: Owner
+  dataFrom:
+    - extract:
+        key: {{ required "externalSecret.remoteKey is required" .Values.externalSecret.remoteKey | quote }}
+---
+{{- end }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "talay.fullname" . }}-{{ .Values.nameSuffix }}
+  labels:
+    {{- include "talay.labels" . | nindent 4 }}
+  {{- if .Values.argocdHook.enabled }}
+  annotations:
+    argocd.argoproj.io/hook: {{ .Values.argocdHook.phase | quote }}
+    argocd.argoproj.io/hook-delete-policy: {{ .Values.argocdHook.deletePolicy | quote }}
+  {{- end }}
+spec:
+  backoffLimit: {{ .Values.backoffLimit }}
+  activeDeadlineSeconds: {{ .Values.activeDeadlineSeconds }}
+  ttlSecondsAfterFinished: {{ .Values.ttlSecondsAfterFinished }}
+  template:
+    metadata:
+      labels:
+        {{- include "talay.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ include "talay.serviceAccountName" . }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automount }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: job
+          {{- if .Values.image.digest }}
+          image: "{{ .Values.image.repository }}@{{ .Values.image.digest }}"
+          {{- else }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          {{- end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.command }}
+          command:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.args }}
+          args:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          env:
+            {{- if .Values.observability.enabled }}
+            - name: OTEL_SERVICE_NAME
+              value: {{ default (include "talay.fullname" .) .Values.observability.serviceName | quote }}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ .Values.observability.otlpEndpoint | quote }}
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: {{ .Values.observability.otlpProtocol | quote }}
+            - name: OTEL_TRACES_SAMPLER
+              value: parentbased_traceidratio
+            - name: OTEL_TRACES_SAMPLER_ARG
+              value: {{ .Values.observability.samplingRatio | quote }}
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: "deployment.environment={{ .Values.environment }},service.version={{ .Values.image.tag }},job.type=one-shot"
+            {{- end }}
+            {{- with .Values.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- if or .Values.config .Values.externalSecret.enabled .Values.envFrom }}
+          envFrom:
+            {{- if .Values.config }}
+            - configMapRef:
+                name: {{ include "talay.fullname" . }}
+            {{- end }}
+            {{- if .Values.externalSecret.enabled }}
+            - secretRef:
+                name: {{ include "talay.externalSecretName" . }}
+            {{- end }}
+            {{- with .Values.envFrom }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- with .Values.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with .Values.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

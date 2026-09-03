@@ -1,0 +1,10 @@
+apiVersion: v2
+name: talay-service
+description: Production HTTP service chart for Java and Node workloads
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+dependencies:
+  - name: talay-common
+    version: 0.1.0
+    repository: file://../talay-common

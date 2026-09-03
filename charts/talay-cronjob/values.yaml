@@ -1,0 +1,72 @@
+nameOverride: ""
+fullnameOverride: ""
+environment: dev
+partOf: talay
+
+schedule: "0 * * * *"
+timeZone: Europe/Istanbul
+concurrencyPolicy: Forbid
+suspend: false
+successfulJobsHistoryLimit: 3
+failedJobsHistoryLimit: 3
+startingDeadlineSeconds: 300
+backoffLimit: 2
+activeDeadlineSeconds: 3600
+ttlSecondsAfterFinished: 86400
+
+image:
+  repository: example.invalid/talay/cronjob
+  tag: "0.0.0"
+  digest: ""
+  pullPolicy: IfNotPresent
+imagePullSecrets: []
+command: []
+args: []
+
+serviceAccount:
+  create: true
+  automount: false
+  annotations: {}
+  name: ""
+
+config: {}
+env: []
+envFrom: []
+externalSecret:
+  enabled: false
+  refreshInterval: 1h
+  secretStoreName: vault
+  secretStoreKind: ClusterSecretStore
+  remoteKey: ""
+  targetName: ""
+
+observability:
+  enabled: true
+  serviceName: ""
+  otlpEndpoint: http://otel-collector.monitoring.svc.cluster.local:4318
+  otlpProtocol: http/protobuf
+  samplingRatio: "1.0"
+
+podAnnotations: {}
+podLabels: {}
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: [ALL]
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    memory: 512Mi
+nodeSelector: {}
+tolerations: []
+affinity: {}
+volumes: []
+volumeMounts: []

@@ -1,0 +1,17 @@
+{{- if and .Values.service.enabled .Values.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "talay.fullname" . }}
+  labels:
+    {{- include "talay.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "talay.selectorLabels" . | nindent 6 }}
+  endpoints:
+    - port: http
+      path: {{ .Values.serviceMonitor.path }}
+      interval: {{ .Values.serviceMonitor.interval }}
+      scrapeTimeout: {{ .Values.serviceMonitor.scrapeTimeout }}
+{{- end }}

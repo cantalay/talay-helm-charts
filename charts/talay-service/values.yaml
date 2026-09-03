@@ -1,0 +1,134 @@
+nameOverride: ""
+fullnameOverride: ""
+environment: dev
+partOf: talay
+
+replicaCount: 1
+revisionHistoryLimit: 5
+
+image:
+  repository: example.invalid/talay/service
+  tag: "0.0.0"
+  digest: ""
+  pullPolicy: IfNotPresent
+imagePullSecrets: []
+
+runtime:
+  type: java
+  java:
+    agent:
+      enabled: true
+      image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-java:2.31.1
+    toolOptions: ""
+  node:
+    autoInstrumentation:
+      enabled: false
+    nodeOptions: ""
+
+serviceAccount:
+  create: true
+  automount: false
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: [ALL]
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+
+containerPort: 8080
+service:
+  enabled: true
+  type: ClusterIP
+  port: 80
+  annotations: {}
+
+ingress:
+  enabled: false
+  className: traefik
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+  hosts: []
+  tls: []
+
+config: {}
+env: []
+envFrom: []
+
+externalSecret:
+  enabled: false
+  refreshInterval: 1h
+  secretStoreName: vault
+  secretStoreKind: ClusterSecretStore
+  remoteKey: ""
+  targetName: ""
+
+observability:
+  enabled: true
+  serviceName: ""
+  otlpEndpoint: http://otel-collector.monitoring.svc.cluster.local:4318
+  otlpProtocol: http/protobuf
+  tracesExporter: otlp
+  metricsExporter: otlp
+  logsExporter: none
+  samplingRatio: "1.0"
+
+probes:
+  startup:
+    enabled: true
+    path: /health/startup
+    failureThreshold: 30
+    periodSeconds: 5
+  readiness:
+    enabled: true
+    path: /health/ready
+    initialDelaySeconds: 5
+    periodSeconds: 10
+  liveness:
+    enabled: true
+    path: /health/live
+    initialDelaySeconds: 15
+    periodSeconds: 20
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    memory: 768Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 75
+  targetMemoryUtilizationPercentage: null
+
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+
+serviceMonitor:
+  enabled: true
+  path: /actuator/prometheus
+  interval: 30s
+  scrapeTimeout: 10s
+
+networkPolicy:
+  enabled: true
+
+terminationGracePeriodSeconds: 45
+affinity: {}
+nodeSelector: {}
+tolerations: []
+topologySpreadConstraints: []
+volumes: []
+volumeMounts: []

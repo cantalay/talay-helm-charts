@@ -1,0 +1,67 @@
+nameOverride: ""
+fullnameOverride: ""
+environment: dev
+partOf: talay
+nameSuffix: run
+
+argocdHook:
+  enabled: true
+  phase: PreSync
+  deletePolicy: BeforeHookCreation,HookSucceeded
+
+backoffLimit: 2
+activeDeadlineSeconds: 1800
+ttlSecondsAfterFinished: 86400
+
+image:
+  repository: example.invalid/talay/job
+  tag: "0.0.0"
+  digest: ""
+  pullPolicy: IfNotPresent
+imagePullSecrets: []
+command: []
+args: []
+
+serviceAccount:
+  create: true
+  automount: false
+  annotations: {}
+  name: ""
+config: {}
+env: []
+envFrom: []
+externalSecret:
+  enabled: false
+  refreshInterval: 1h
+  secretStoreName: vault
+  secretStoreKind: ClusterSecretStore
+  remoteKey: ""
+  targetName: ""
+observability:
+  enabled: true
+  serviceName: ""
+  otlpEndpoint: http://otel-collector.monitoring.svc.cluster.local:4318
+  otlpProtocol: http/protobuf
+  samplingRatio: "1.0"
+podAnnotations: {}
+podLabels: {}
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: [ALL]
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    memory: 512Mi
+nodeSelector: {}
+tolerations: []
+volumes: []
+volumeMounts: []

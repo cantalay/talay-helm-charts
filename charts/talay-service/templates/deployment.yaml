@@ -1,0 +1,193 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "talay.fullname" . }}
+  labels:
+    {{- include "talay.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      {{- include "talay.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "talay.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ include "talay.serviceAccountName" . }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automount }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if and (eq .Values.runtime.type "java") .Values.runtime.java.agent.enabled }}
+      initContainers:
+        - name: otel-java-agent
+          image: {{ .Values.runtime.java.agent.image | quote }}
+          imagePullPolicy: IfNotPresent
+          command: ["cp", "/javaagent.jar", "/otel-auto/javaagent.jar"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            runAsNonRoot: true
+          volumeMounts:
+            - name: otel-auto
+              mountPath: /otel-auto
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          {{- if .Values.image.digest }}
+          image: "{{ .Values.image.repository }}@{{ .Values.image.digest }}"
+          {{- else }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          {{- end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.containerPort }}
+              protocol: TCP
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            {{- if .Values.observability.enabled }}
+            - name: OTEL_SERVICE_NAME
+              value: {{ default (include "talay.fullname" .) .Values.observability.serviceName | quote }}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ .Values.observability.otlpEndpoint | quote }}
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: {{ .Values.observability.otlpProtocol | quote }}
+            - name: OTEL_TRACES_EXPORTER
+              value: {{ .Values.observability.tracesExporter | quote }}
+            - name: OTEL_METRICS_EXPORTER
+              value: {{ .Values.observability.metricsExporter | quote }}
+            - name: OTEL_LOGS_EXPORTER
+              value: {{ .Values.observability.logsExporter | quote }}
+            - name: OTEL_TRACES_SAMPLER
+              value: parentbased_traceidratio
+            - name: OTEL_TRACES_SAMPLER_ARG
+              value: {{ .Values.observability.samplingRatio | quote }}
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: "deployment.environment={{ .Values.environment }},service.version={{ .Values.image.tag }},k8s.namespace.name=$(POD_NAMESPACE),k8s.pod.name=$(POD_NAME)"
+            {{- end }}
+            {{- if and (eq .Values.runtime.type "java") .Values.runtime.java.agent.enabled }}
+            - name: JAVA_TOOL_OPTIONS
+              value: {{ printf "-javaagent:/otel-auto/javaagent.jar %s" .Values.runtime.java.toolOptions | trim | quote }}
+            {{- else if and (eq .Values.runtime.type "java") .Values.runtime.java.toolOptions }}
+            - name: JAVA_TOOL_OPTIONS
+              value: {{ .Values.runtime.java.toolOptions | quote }}
+            {{- end }}
+            {{- if and (eq .Values.runtime.type "node") .Values.runtime.node.autoInstrumentation.enabled }}
+            - name: NODE_OPTIONS
+              value: {{ printf "--require @opentelemetry/auto-instrumentations-node/register %s" .Values.runtime.node.nodeOptions | trim | quote }}
+            {{- else if and (eq .Values.runtime.type "node") .Values.runtime.node.nodeOptions }}
+            - name: NODE_OPTIONS
+              value: {{ .Values.runtime.node.nodeOptions | quote }}
+            {{- end }}
+            {{- with .Values.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- if or .Values.config .Values.externalSecret.enabled .Values.envFrom }}
+          envFrom:
+            {{- if .Values.config }}
+            - configMapRef:
+                name: {{ include "talay.fullname" . }}
+            {{- end }}
+            {{- if .Values.externalSecret.enabled }}
+            - secretRef:
+                name: {{ include "talay.externalSecretName" . }}
+            {{- end }}
+            {{- with .Values.envFrom }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.probes.startup.enabled }}
+          startupProbe:
+            httpGet:
+              path: {{ .Values.probes.startup.path }}
+              port: http
+            failureThreshold: {{ .Values.probes.startup.failureThreshold }}
+            periodSeconds: {{ .Values.probes.startup.periodSeconds }}
+          {{- end }}
+          {{- if .Values.probes.readiness.enabled }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.probes.readiness.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+          {{- end }}
+          {{- if .Values.probes.liveness.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.probes.liveness.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- if or (and (eq .Values.runtime.type "java") .Values.runtime.java.agent.enabled) .Values.volumeMounts }}
+          volumeMounts:
+            {{- if and (eq .Values.runtime.type "java") .Values.runtime.java.agent.enabled }}
+            - name: otel-auto
+              mountPath: /otel-auto
+              readOnly: true
+            {{- end }}
+            {{- with .Values.volumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      {{- if or (and (eq .Values.runtime.type "java") .Values.runtime.java.agent.enabled) .Values.volumes }}
+      volumes:
+        {{- if and (eq .Values.runtime.type "java") .Values.runtime.java.agent.enabled }}
+        - name: otel-auto
+          emptyDir: {}
+        {{- end }}
+        {{- with .Values.volumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
