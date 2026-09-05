@@ -1,0 +1,20 @@
+name: verify-charts
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  helm:
+    uses: cantalay/talay-workflows/.github/workflows/helm.yaml@804711925abc685d4f5e48aed1ced1a95b9041e7
+    with:
+      charts-directory: charts
+      helm-version: v4.2.4
+      publish: false
+      registry-namespace: cantalay/charts
