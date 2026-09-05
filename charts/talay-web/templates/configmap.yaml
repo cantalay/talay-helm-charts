@@ -35,6 +35,8 @@ data:
       }
 
       location / {
+        sub_filter '</head>' '<script src="/runtime-config.js"></script></head>';
+        sub_filter_once on;
         try_files $uri $uri/ /index.html;
         add_header Cache-Control "no-cache";
       }

@@ -15,4 +15,6 @@ Native React Native Android/iOS uygulamaları Kubernetes'e deploy edilmez; build
 
 Java auto-instrumentation etkinleştirildiğinde pinned OpenTelemetry Java agent `2.31.1` bir init container ile kopyalanır. Node auto-instrumentation için uygulamanın `@opentelemetry/auto-instrumentations-node` paketini production dependency olarak içermesi gerekir.
 
+Private registry kullanan servislerde `registrySecret.enabled=true` yapılır. Chart, `platform/registry/ghcr` benzeri Vault KV yolundaki `.dockerconfigjson` alanını `kubernetes.io/dockerconfigjson` tipinde namespace-local `ghcr-pull` Secret'ına dönüştürür ve pod'a otomatik bağlar. Registry parolası values veya Git reposuna yazılmaz.
+
 Library dependency'leri release/lint öncesinde `helm dependency build charts/<chart>` ile çözülür. Chart'lar OCI registry'ye immutable sürümle publish edilmelidir; environment reposu major sürümü otomatik ilerletmemelidir.

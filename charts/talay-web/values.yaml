@@ -12,6 +12,14 @@ image:
   pullPolicy: IfNotPresent
 imagePullSecrets: []
 
+registrySecret:
+  enabled: false
+  refreshInterval: 1h
+  secretStoreName: vault
+  secretStoreKind: ClusterSecretStore
+  remoteKey: platform/registry/ghcr
+  targetName: ghcr-pull
+
 serviceAccount:
   create: true
   automount: false

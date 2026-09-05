@@ -34,6 +34,20 @@
         }
       ]
     },
+    "registrySecret": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "remoteKey": { "type": "string" },
+        "targetName": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "enabled": { "const": true } }, "required": ["enabled"] },
+          "then": { "properties": { "remoteKey": { "minLength": 1 } }, "required": ["remoteKey"] }
+        }
+      ]
+    },
     "resources": { "type": "object" }
   }
 }

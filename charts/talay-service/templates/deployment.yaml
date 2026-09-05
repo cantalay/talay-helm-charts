@@ -34,9 +34,14 @@ spec:
       automountServiceAccountToken: {{ .Values.serviceAccount.automount }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
-      {{- with .Values.imagePullSecrets }}
+      {{- if or .Values.registrySecret.enabled .Values.imagePullSecrets }}
       imagePullSecrets:
+        {{- if .Values.registrySecret.enabled }}
+        - name: {{ .Values.registrySecret.targetName | quote }}
+        {{- end }}
+        {{- with .Values.imagePullSecrets }}
         {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- end }}
       {{- if and (eq .Values.runtime.type "java") .Values.runtime.java.agent.enabled }}
       initContainers:
@@ -153,8 +158,9 @@ spec:
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- if or (and (eq .Values.runtime.type "java") .Values.runtime.java.agent.enabled) .Values.volumeMounts }}
           volumeMounts:
+            - name: runtime-tmp
+              mountPath: /tmp
             {{- if and (eq .Values.runtime.type "java") .Values.runtime.java.agent.enabled }}
             - name: otel-auto
               mountPath: /otel-auto
@@ -163,10 +169,10 @@ spec:
             {{- with .Values.volumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
-          {{- end }}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
-      {{- if or (and (eq .Values.runtime.type "java") .Values.runtime.java.agent.enabled) .Values.volumes }}
       volumes:
+        - name: runtime-tmp
+          emptyDir: {}
         {{- if and (eq .Values.runtime.type "java") .Values.runtime.java.agent.enabled }}
         - name: otel-auto
           emptyDir: {}
@@ -174,7 +180,6 @@ spec:
         {{- with .Values.volumes }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- end }}
       {{- with .Values.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
