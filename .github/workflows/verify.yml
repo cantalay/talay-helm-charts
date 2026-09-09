@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   helm:
-    uses: cantalay/talay-workflows/.github/workflows/helm.yaml@804711925abc685d4f5e48aed1ced1a95b9041e7
+    uses: cantalay/talay-workflows/.github/workflows/helm.yaml@65a99720b5461e49a8113d647651cf743f961abb
     with:
       charts-directory: charts
       helm-version: v4.2.4
