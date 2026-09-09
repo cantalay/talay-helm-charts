@@ -13,10 +13,21 @@ data:
       server_name _;
       root {{ .Values.webRoot }};
       index index.html;
+      server_tokens off;
 
       add_header X-Content-Type-Options "nosniff" always;
-      add_header X-Frame-Options "SAMEORIGIN" always;
-      add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+      add_header X-Frame-Options {{ .Values.securityHeaders.xFrameOptions | quote }} always;
+      add_header Referrer-Policy {{ .Values.securityHeaders.referrerPolicy | quote }} always;
+      add_header Strict-Transport-Security {{ .Values.securityHeaders.strictTransportSecurity | quote }} always;
+      add_header Permissions-Policy {{ .Values.securityHeaders.permissionsPolicy | quote }} always;
+      add_header Cross-Origin-Resource-Policy "same-origin" always;
+      {{- if .Values.securityHeaders.contentSecurityPolicy }}
+      add_header Content-Security-Policy {{ .Values.securityHeaders.contentSecurityPolicy | quote }} always;
+      {{- end }}
+
+      if ($request_method !~ ^(GET|HEAD|OPTIONS)$) {
+        return 405;
+      }
 
       location = /healthz {
         access_log off;

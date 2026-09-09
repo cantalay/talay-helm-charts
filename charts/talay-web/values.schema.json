@@ -16,6 +16,23 @@
     },
     "containerPort": { "type": "integer", "minimum": 1, "maximum": 65535 },
     "runtimeConfig": { "type": "object" },
+    "securityHeaders": {
+      "type": "object",
+      "properties": {
+        "contentSecurityPolicy": { "type": "string" },
+        "strictTransportSecurity": { "type": "string", "minLength": 1 },
+        "permissionsPolicy": { "type": "string", "minLength": 1 },
+        "referrerPolicy": { "type": "string", "minLength": 1 },
+        "xFrameOptions": { "enum": ["DENY", "SAMEORIGIN"] }
+      }
+    },
+    "networkPolicy": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "denyEgress": { "type": "boolean" }
+      }
+    },
     "registrySecret": {
       "type": "object",
       "properties": {

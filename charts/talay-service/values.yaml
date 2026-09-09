@@ -132,6 +132,11 @@ serviceMonitor:
 
 networkPolicy:
   enabled: true
+  allowSameNamespace: true
+  additionalIngress: []
+  egress:
+    enabled: false
+    rules: []
 
 terminationGracePeriodSeconds: 45
 affinity: {}

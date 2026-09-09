@@ -43,6 +43,13 @@ containerPort: 8080
 webRoot: /usr/share/nginx/html
 runtimeConfig: {}
 
+securityHeaders:
+  contentSecurityPolicy: ""
+  strictTransportSecurity: max-age=31536000; includeSubDomains
+  permissionsPolicy: camera=(), microphone=(), geolocation=(), payment=()
+  referrerPolicy: strict-origin-when-cross-origin
+  xFrameOptions: DENY
+
 service:
   type: ClusterIP
   port: 80
@@ -81,6 +88,7 @@ podDisruptionBudget:
 
 networkPolicy:
   enabled: true
+  denyEgress: false
 
 nodeSelector: {}
 tolerations: []

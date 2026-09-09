@@ -17,4 +17,9 @@ Java auto-instrumentation etkinleştirildiğinde pinned OpenTelemetry Java agent
 
 Private registry kullanan servislerde `registrySecret.enabled=true` yapılır. Chart, `platform/registry/ghcr` benzeri Vault KV yolundaki `.dockerconfigjson` alanını `kubernetes.io/dockerconfigjson` tipinde namespace-local `ghcr-pull` Secret'ına dönüştürür ve pod'a otomatik bağlar. Registry parolası values veya Git reposuna yazılmaz.
 
+`talay-service` için aynı-namespace ingress kapatılabilir ve egress kuralları açık allowlist olarak
+verilebilir. `talay-web` statik workload'ları egress'i tamamen kapatabilir; CSP, HSTS,
+Permissions-Policy, Referrer-Policy ve frame koruması values üzerinden merkezi Nginx config'ine
+uygulanır.
+
 Library dependency'leri release/lint öncesinde `helm dependency build charts/<chart>` ile çözülür. Chart'lar OCI registry'ye immutable sürümle publish edilmelidir; environment reposu major sürümü otomatik ilerletmemelidir.
