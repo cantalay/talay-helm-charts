@@ -2,7 +2,7 @@ apiVersion: v2
 name: talay-service
 description: Production HTTP service chart for Java and Node workloads
 type: application
-version: 0.3.0
+version: 0.3.1
 appVersion: "1.0.0"
 dependencies:
   - name: talay-common

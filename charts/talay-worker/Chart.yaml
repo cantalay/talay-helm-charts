@@ -2,7 +2,7 @@ apiVersion: v2
 name: talay-worker
 description: Background worker chart for Java, Node and generic workloads
 type: application
-version: 0.1.0
+version: 0.1.1
 appVersion: "1.0.0"
 dependencies:
   - name: talay-common
