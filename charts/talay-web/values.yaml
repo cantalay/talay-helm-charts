@@ -43,6 +43,14 @@ containerPort: 8080
 webRoot: /usr/share/nginx/html
 runtimeConfig: {}
 
+# Keep application-specific NGINX configuration in the environment repository.
+# Increment configRevision whenever the referenced ConfigMap content changes so
+# Kubernetes performs a controlled rollout (ConfigMap subPath mounts are static).
+nginx:
+  existingConfigMap: ""
+  configKey: default.conf
+  configRevision: ""
+
 securityHeaders:
   contentSecurityPolicy: ""
   strictTransportSecurity: max-age=31536000; includeSubDomains

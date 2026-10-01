@@ -16,6 +16,26 @@
     },
     "containerPort": { "type": "integer", "minimum": 1, "maximum": 65535 },
     "runtimeConfig": { "type": "object" },
+    "nginx": {
+      "type": "object",
+      "properties": {
+        "existingConfigMap": { "type": "string" },
+        "configKey": { "type": "string", "minLength": 1 },
+        "configRevision": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "existingConfigMap": { "minLength": 1 } },
+            "required": ["existingConfigMap"]
+          },
+          "then": {
+            "properties": { "configRevision": { "minLength": 1 } },
+            "required": ["configRevision"]
+          }
+        }
+      ]
+    },
     "securityHeaders": {
       "type": "object",
       "properties": {

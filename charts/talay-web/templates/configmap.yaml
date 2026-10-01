@@ -7,6 +7,7 @@ metadata:
 data:
   runtime-config.js: |-
     window.__TALAY_CONFIG__ = {{ .Values.runtimeConfig | toJson }};
+  {{- if not .Values.nginx.existingConfigMap }}
   default.conf: |-
     server {
       listen {{ .Values.containerPort }};
@@ -52,3 +53,4 @@ data:
         add_header Cache-Control "no-cache";
       }
     }
+  {{- end }}
