@@ -63,12 +63,16 @@ spec:
             httpGet:
               path: {{ .Values.probes.readiness.path }}
               port: http
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
             periodSeconds: 10
           livenessProbe:
             httpGet:
               path: {{ .Values.probes.liveness.path }}
               port: http
             initialDelaySeconds: 10
+            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
             periodSeconds: 20
           resources:
             {{- toYaml .Values.resources | nindent 12 }}

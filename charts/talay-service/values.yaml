@@ -93,17 +93,22 @@ probes:
   startup:
     enabled: true
     path: /health/startup
+    timeoutSeconds: 5
     failureThreshold: 30
     periodSeconds: 5
   readiness:
     enabled: true
     path: /health/ready
     initialDelaySeconds: 5
+    timeoutSeconds: 5
+    failureThreshold: 6
     periodSeconds: 10
   liveness:
     enabled: true
     path: /health/live
     initialDelaySeconds: 15
+    timeoutSeconds: 5
+    failureThreshold: 6
     periodSeconds: 20
 
 resources:

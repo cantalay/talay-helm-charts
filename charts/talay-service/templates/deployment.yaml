@@ -140,6 +140,7 @@ spec:
             httpGet:
               path: {{ .Values.probes.startup.path }}
               port: http
+            timeoutSeconds: {{ .Values.probes.startup.timeoutSeconds }}
             failureThreshold: {{ .Values.probes.startup.failureThreshold }}
             periodSeconds: {{ .Values.probes.startup.periodSeconds }}
           {{- end }}
@@ -149,6 +150,8 @@ spec:
               path: {{ .Values.probes.readiness.path }}
               port: http
             initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
             periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
           {{- end }}
           {{- if .Values.probes.liveness.enabled }}
@@ -157,6 +160,8 @@ spec:
               path: {{ .Values.probes.liveness.path }}
               port: http
             initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
             periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
           {{- end }}
           resources:

@@ -74,8 +74,12 @@ ingress:
 probes:
   readiness:
     path: /healthz
+    timeoutSeconds: 5
+    failureThreshold: 6
   liveness:
     path: /healthz
+    timeoutSeconds: 5
+    failureThreshold: 6
 
 resources:
   requests:
